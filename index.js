@@ -22,7 +22,7 @@ app.get("/health", (req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/add-test-band", async (req, res) => {
+app.get("/list-bands", async (req, res) => {
     if (!pool) {
       return res.status(500).json({
         ok: false,
@@ -31,24 +31,22 @@ app.get("/add-test-band", async (req, res) => {
     }
   
     try {
-      const result = await pool.query(
-        `
-        INSERT INTO bands (name, city, state, notes)
-        VALUES ($1, $2, $3, $4)
-        RETURNING *;
-        `,
-        ["Devo", "Akron", "OH", "Test band added from backend route"]
-      );
+      const result = await pool.query(`
+        SELECT id, name, city, state, notes, created_at
+        FROM bands
+        ORDER BY id ASC;
+      `);
   
       res.json({
         ok: true,
-        band: result.rows[0],
+        count: result.rows.length,
+        bands: result.rows,
       });
     } catch (error) {
-      console.error("Add test band failed:", error);
+      console.error("List bands failed:", error);
       res.status(500).json({
         ok: false,
-        error: "Failed to add test band",
+        error: "Failed to list bands",
       });
     }
   });

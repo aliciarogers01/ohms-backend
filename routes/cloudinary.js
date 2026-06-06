@@ -8,7 +8,11 @@ function createCloudinaryRouter() {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
-    const folder = process.env.CLOUDINARY_FOLDER || "ohms/bands";
+    const allowedFolders = {
+      artists: "ohms/artists",
+      bands: process.env.CLOUDINARY_FOLDER || "ohms/bands",
+    };
+    const folder = allowedFolders[req.query.folder] || allowedFolders.bands;
 
     if (!cloudName || !apiKey || !apiSecret) {
       return res.status(500).json({

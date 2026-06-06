@@ -4,6 +4,7 @@ const path = require("path");
 require("dotenv").config();
 
 const pool = require("./db");
+const createArtistsRouter = require("./routes/artists");
 const createBandsRouter = require("./routes/bands");
 const createCloudinaryRouter = require("./routes/cloudinary");
 const createSystemRouter = require("./routes/system");
@@ -22,7 +23,12 @@ app.get("/admin/bands", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin-bands.html"));
 });
 
+app.get("/admin/artists", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin-artists.html"));
+});
+
 app.use(createSystemRouter(pool));
+app.use("/artists", createArtistsRouter(pool));
 app.use("/bands", createBandsRouter(pool));
 app.use("/cloudinary", createCloudinaryRouter());
 app.use("/list-bands", createBandsRouter(pool));

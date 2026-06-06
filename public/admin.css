@@ -15,6 +15,7 @@ body {
 }
 
 button,
+a,
 input,
 textarea {
   font: inherit;
@@ -34,6 +35,24 @@ button {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
+}
+
+.header-actions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.secondary-link {
+  align-items: center;
+  background: #dfe7ea;
+  border-radius: 6px;
+  color: #172026;
+  display: inline-flex;
+  font-weight: 700;
+  min-height: 42px;
+  padding: 0 16px;
+  text-decoration: none;
 }
 
 .secondary-button {
@@ -96,6 +115,47 @@ h2 {
   display: grid;
   gap: 16px;
   margin-top: 22px;
+}
+
+.admin-menu {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-top: 24px;
+}
+
+.admin-menu-item {
+  border: 1px solid #d9e1e4;
+  border-radius: 8px;
+  color: #172026;
+  display: grid;
+  gap: 8px;
+  min-height: 110px;
+  padding: 18px;
+  text-decoration: none;
+}
+
+.admin-menu-item:hover {
+  border-color: #176b63;
+}
+
+.admin-menu-item span {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.admin-menu-item small {
+  color: #5b6b73;
+}
+
+.admin-menu-item.disabled {
+  background: #f5f7f8;
+  cursor: default;
+  opacity: 0.72;
+}
+
+.admin-menu-item.disabled:hover {
+  border-color: #d9e1e4;
 }
 
 .form-row {
@@ -211,6 +271,7 @@ textarea {
   }
 
   .panel-header,
+  .header-actions,
   .form-actions {
     align-items: stretch;
     flex-direction: column;

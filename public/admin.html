@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>OHMS Band Admin</title>
+    <title>OHMS Admin</title>
     <link rel="stylesheet" href="/admin.css">
   </head>
   <body>
@@ -12,50 +12,33 @@
         <div class="panel-header">
           <div>
             <p class="eyebrow">OHMS</p>
-            <h1>Band Admin</h1>
+            <h1>ADMIN</h1>
           </div>
-          <button id="refreshButton" type="button">Refresh</button>
         </div>
 
-        <form id="bandForm" class="band-form">
-          <label>
-            <span>Name</span>
-            <input id="name" name="name" type="text" autocomplete="off" required>
-          </label>
-
-          <div class="form-row">
-            <label>
-              <span>City</span>
-              <input id="city" name="city" type="text" autocomplete="address-level2">
-            </label>
-
-            <label>
-              <span>State</span>
-              <input id="state" name="state" type="text" maxlength="2" autocomplete="address-level1">
-            </label>
-          </div>
-
-          <label>
-            <span>Notes</span>
-            <textarea id="notes" name="notes" rows="3"></textarea>
-          </label>
-
-          <div class="form-actions">
-            <p id="statusMessage" class="status" role="status"></p>
-            <button id="submitButton" type="submit">Add Band</button>
-          </div>
-        </form>
-      </section>
-
-      <section class="panel">
-        <div class="list-header">
-          <h2>Current Bands</h2>
-          <span id="bandCount" class="count">0</span>
-        </div>
-        <div id="bandsList" class="bands-list"></div>
+        <nav class="admin-menu" aria-label="Admin actions">
+          <a class="admin-menu-item" href="/admin/bands">
+            <span>Add Band</span>
+            <small>Manage band listings</small>
+          </a>
+          <a class="admin-menu-item disabled" href="#" aria-disabled="true">
+            <span>Add Artist</span>
+            <small>Coming next</small>
+          </a>
+          <a class="admin-menu-item disabled" href="#" aria-disabled="true">
+            <span>Add Album</span>
+            <small>Coming next</small>
+          </a>
+          <a class="admin-menu-item disabled" href="#" aria-disabled="true">
+            <span>Add Venue</span>
+            <small>Coming next</small>
+          </a>
+          <a class="admin-menu-item disabled" href="#" aria-disabled="true">
+            <span>Add Flyer</span>
+            <small>Coming next</small>
+          </a>
+        </nav>
       </section>
     </main>
-
-    <script src="/admin.js"></script>
   </body>
 </html>

@@ -17,6 +17,10 @@ app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin.html"));
 });
 
+app.get("/admin/bands", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin-bands.html"));
+});
+
 app.use(createSystemRouter(pool));
 app.use("/bands", createBandsRouter(pool));
 app.use("/list-bands", createBandsRouter(pool));

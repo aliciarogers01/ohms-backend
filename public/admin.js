@@ -6,7 +6,6 @@ const submitButton = document.querySelector("#submitButton");
 const statusMessage = document.querySelector("#statusMessage");
 const bandMembersList = document.querySelector("#bandMembersList");
 const addMemberButton = document.querySelector("#addMemberButton");
-const artistOptions = document.querySelector("#artistOptions");
 
 let editingBandId = null;
 let artists = [];
@@ -37,26 +36,21 @@ function bandPayload(form) {
 function memberPayload(form) {
   return [...form.querySelectorAll("[data-member-row]")]
     .map((row) => {
+      const select = row.querySelector("[data-member-select]");
       const input = row.querySelector("[data-member-name]");
+      const artistId = Number(select.value);
       const name = input.value.trim();
-      const artist = artists.find((option) => option.name.toLowerCase() === name.toLowerCase());
 
       return {
-        artist_id: artist ? artist.id : null,
+        artist_id: validArtistId(artistId) ? artistId : null,
         name,
       };
     })
-    .filter((member) => member.name);
+    .filter((member) => member.artist_id || member.name);
 }
 
-function renderArtistOptions() {
-  artistOptions.innerHTML = "";
-
-  artists.forEach((artist) => {
-    const option = document.createElement("option");
-    option.value = artist.name;
-    artistOptions.appendChild(option);
-  });
+function validArtistId(id) {
+  return Number.isInteger(id) && id > 0;
 }
 
 async function loadArtists() {
@@ -69,10 +63,8 @@ async function loadArtists() {
     }
 
     artists = data.artists;
-    renderArtistOptions();
   } catch (error) {
     artists = [];
-    renderArtistOptions();
   }
 }
 
@@ -81,20 +73,62 @@ function createMemberRow(member = {}) {
   row.className = "member-row";
   row.dataset.memberRow = "";
 
-  const label = document.createElement("label");
-  const labelText = document.createElement("span");
-  labelText.textContent = "Artist";
+  const selectLabel = document.createElement("label");
+  const selectText = document.createElement("span");
+  selectText.textContent = "Existing Artist";
+
+  const select = document.createElement("select");
+  select.dataset.memberSelect = "";
+
+  const emptyOption = document.createElement("option");
+  emptyOption.value = "";
+  emptyOption.textContent = artists.length ? "Select artist" : "No artists yet";
+  select.appendChild(emptyOption);
+
+  artists.forEach((artist) => {
+    const option = document.createElement("option");
+    option.value = artist.id;
+    option.textContent = artist.name;
+    select.appendChild(option);
+  });
+
+  if (validArtistId(member.id)) {
+    select.value = String(member.id);
+  }
+
+  selectLabel.append(selectText, select);
+
+  const inputLabel = document.createElement("label");
+  const inputText = document.createElement("span");
+  inputText.textContent = "New Artist";
 
   const input = document.createElement("input");
   input.type = "text";
-  input.setAttribute("list", "artistOptions");
   input.autocomplete = "off";
+  input.placeholder = "Type name if not listed";
   input.dataset.memberName = "";
-  input.value = member.name || "";
 
-  label.append(labelText, input);
+  if (!validArtistId(member.id)) {
+    input.value = member.name || "";
+  }
+
+  select.addEventListener("change", () => {
+    if (select.value) {
+      input.value = "";
+    }
+  });
+
+  input.addEventListener("input", () => {
+    if (input.value.trim()) {
+      select.value = "";
+    }
+  });
+
+  inputLabel.append(inputText, input);
+
   row.append(
-    label,
+    selectLabel,
+    inputLabel,
     createButton("Remove", "secondary-button", () => {
       row.remove();
     }),

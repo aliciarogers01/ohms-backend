@@ -1,16 +1,34 @@
 const express = require("express");
 
+let schemaReady = false;
+
 function bandFields(body) {
   return {
     name: body.name,
     city: body.city || null,
     state: body.state || null,
+    years_active: body.years_active || null,
+    picture_url: body.picture_url || null,
     notes: body.notes || null,
   };
 }
 
 function validId(id) {
   return Number.isInteger(id) && id > 0;
+}
+
+async function ensureBandsSchema(pool) {
+  if (schemaReady) {
+    return;
+  }
+
+  await pool.query(`
+    ALTER TABLE bands
+    ADD COLUMN IF NOT EXISTS years_active TEXT,
+    ADD COLUMN IF NOT EXISTS picture_url TEXT;
+  `);
+
+  schemaReady = true;
 }
 
 function createBandsRouter(pool) {
@@ -25,8 +43,10 @@ function createBandsRouter(pool) {
     }
 
     try {
+      await ensureBandsSchema(pool);
+
       const result = await pool.query(`
-        SELECT id, name, city, state, notes, created_at
+        SELECT id, name, city, state, years_active, picture_url, notes, created_at
         FROM bands
         ORDER BY id ASC;
       `);
@@ -46,7 +66,7 @@ function createBandsRouter(pool) {
   });
 
   router.post("/", async (req, res) => {
-    const { name, city, state, notes } = bandFields(req.body);
+    const { name, city, state, years_active, picture_url, notes } = bandFields(req.body);
 
     if (!name || typeof name !== "string" || !name.trim()) {
       return res.status(400).json({
@@ -63,13 +83,15 @@ function createBandsRouter(pool) {
     }
 
     try {
+      await ensureBandsSchema(pool);
+
       const result = await pool.query(
         `
-          INSERT INTO bands (name, city, state, notes)
-          VALUES ($1, $2, $3, $4)
-          RETURNING id, name, city, state, notes, created_at;
+          INSERT INTO bands (name, city, state, years_active, picture_url, notes)
+          VALUES ($1, $2, $3, $4, $5, $6)
+          RETURNING id, name, city, state, years_active, picture_url, notes, created_at;
         `,
-        [name.trim(), city, state, notes],
+        [name.trim(), city, state, years_active, picture_url, notes],
       );
 
       res.status(201).json({
@@ -87,7 +109,7 @@ function createBandsRouter(pool) {
 
   router.patch("/:id", async (req, res) => {
     const bandId = Number(req.params.id);
-    const { name, city, state, notes } = bandFields(req.body);
+    const { name, city, state, years_active, picture_url, notes } = bandFields(req.body);
 
     if (!validId(bandId)) {
       return res.status(400).json({
@@ -111,14 +133,16 @@ function createBandsRouter(pool) {
     }
 
     try {
+      await ensureBandsSchema(pool);
+
       const result = await pool.query(
         `
           UPDATE bands
-          SET name = $1, city = $2, state = $3, notes = $4
-          WHERE id = $5
-          RETURNING id, name, city, state, notes, created_at;
+          SET name = $1, city = $2, state = $3, years_active = $4, picture_url = $5, notes = $6
+          WHERE id = $7
+          RETURNING id, name, city, state, years_active, picture_url, notes, created_at;
         `,
-        [name.trim(), city, state, notes, bandId],
+        [name.trim(), city, state, years_active, picture_url, notes, bandId],
       );
 
       if (!result.rows.length) {
@@ -159,11 +183,13 @@ function createBandsRouter(pool) {
     }
 
     try {
+      await ensureBandsSchema(pool);
+
       const result = await pool.query(
         `
           DELETE FROM bands
           WHERE id = $1
-          RETURNING id, name, city, state, notes, created_at;
+          RETURNING id, name, city, state, years_active, picture_url, notes, created_at;
         `,
         [bandId],
       );

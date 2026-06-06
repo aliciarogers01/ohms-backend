@@ -23,6 +23,8 @@ function bandPayload(form) {
     name: formData.get("name").trim(),
     city: formData.get("city").trim(),
     state: formData.get("state").trim().toUpperCase(),
+    years_active: formData.get("years_active").trim(),
+    picture_url: formData.get("picture_url").trim(),
     notes: formData.get("notes").trim(),
   };
 }
@@ -40,7 +42,21 @@ function createDisplayCard(band) {
   const item = document.createElement("article");
   item.className = "band-item";
 
+  const picture = document.createElement("div");
+  picture.className = "band-picture";
+
+  if (band.picture_url) {
+    const image = document.createElement("img");
+    image.src = band.picture_url;
+    image.alt = band.name;
+    image.loading = "lazy";
+    picture.appendChild(image);
+  } else {
+    picture.textContent = "No image";
+  }
+
   const content = document.createElement("div");
+  content.className = "band-card-content";
 
   const name = document.createElement("div");
   name.className = "band-name";
@@ -50,14 +66,15 @@ function createDisplayCard(band) {
   meta.className = "band-meta";
   meta.textContent = bandLocation(band) || "Location not set";
 
-  content.append(name, meta);
+  const years = document.createElement("div");
+  years.className = "band-years";
+  years.textContent = band.years_active || "Years active not set";
 
-  if (band.notes) {
-    const notes = document.createElement("p");
-    notes.className = "band-notes";
-    notes.textContent = band.notes;
-    content.appendChild(notes);
-  }
+  content.append(name, meta, years);
+
+  const cardMain = document.createElement("div");
+  cardMain.className = "band-card-main";
+  cardMain.append(picture, content);
 
   const actions = document.createElement("div");
   actions.className = "band-actions";
@@ -69,7 +86,7 @@ function createDisplayCard(band) {
     createButton("Delete", "danger-button", () => deleteBand(band)),
   );
 
-  item.append(content, actions);
+  item.append(cardMain, actions);
   return item;
 }
 
@@ -94,6 +111,16 @@ function createEditCard(band) {
         <input name="state" type="text" maxlength="2" autocomplete="address-level1">
       </label>
     </div>
+    <div class="form-row">
+      <label>
+        <span>Years Active</span>
+        <input name="years_active" type="text" placeholder="1973-present">
+      </label>
+      <label>
+        <span>Picture URL</span>
+        <input name="picture_url" type="url" inputmode="url">
+      </label>
+    </div>
     <label>
       <span>Notes</span>
       <textarea name="notes" rows="3"></textarea>
@@ -107,6 +134,8 @@ function createEditCard(band) {
   form.elements.name.value = band.name || "";
   form.elements.city.value = band.city || "";
   form.elements.state.value = band.state || "";
+  form.elements.years_active.value = band.years_active || "";
+  form.elements.picture_url.value = band.picture_url || "";
   form.elements.notes.value = band.notes || "";
 
   form.addEventListener("submit", (event) => updateBand(event, band.id));

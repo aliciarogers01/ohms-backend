@@ -36,6 +36,15 @@ button:disabled {
   opacity: 0.65;
 }
 
+.secondary-button {
+  background: #dfe7ea;
+  color: #172026;
+}
+
+.danger-button {
+  background: #a12d2d;
+}
+
 .admin-shell {
   display: grid;
   gap: 20px;
@@ -151,9 +160,14 @@ textarea {
 .band-item {
   border: 1px solid #d9e1e4;
   border-radius: 8px;
-  display: grid;
+  display: flex;
   gap: 6px;
+  justify-content: space-between;
   padding: 14px;
+}
+
+.edit-item {
+  display: block;
 }
 
 .band-name {
@@ -169,6 +183,22 @@ textarea {
 
 .band-notes {
   line-height: 1.45;
+}
+
+.band-actions,
+.edit-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.band-actions {
+  flex-shrink: 0;
+}
+
+.edit-form {
+  display: grid;
+  gap: 14px;
 }
 
 @media (max-width: 640px) {
@@ -188,5 +218,12 @@ textarea {
 
   .form-row {
     grid-template-columns: 1fr;
+  }
+
+  .band-item,
+  .band-actions,
+  .edit-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

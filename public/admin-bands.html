@@ -58,6 +58,15 @@
             <textarea id="notes" name="notes" rows="3"></textarea>
           </label>
 
+          <section class="form-section">
+            <div class="section-header">
+              <h2>Band Members</h2>
+              <button id="addMemberButton" type="button" class="secondary-button">Add Artist</button>
+            </div>
+            <div id="bandMembersList" class="member-list"></div>
+            <datalist id="artistOptions"></datalist>
+          </section>
+
           <div class="form-actions">
             <p id="statusMessage" class="status" role="status"></p>
             <button id="submitButton" type="submit">Add Band</button>

@@ -110,6 +110,13 @@ button:disabled {
   justify-content: space-between;
 }
 
+.section-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
 .eyebrow {
   color: #5b6b73;
   font-size: 12px;
@@ -137,6 +144,13 @@ h2 {
   display: grid;
   gap: 16px;
   margin-top: 22px;
+}
+
+.form-section {
+  border-top: 1px solid #d9e1e4;
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
 }
 
 .admin-menu {
@@ -339,6 +353,18 @@ textarea {
   gap: 14px;
 }
 
+.member-list {
+  display: grid;
+  gap: 10px;
+}
+
+.member-row {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 @media (max-width: 640px) {
   .admin-shell {
     padding: 16px;
@@ -350,6 +376,7 @@ textarea {
 
   .panel-header,
   .header-actions,
+  .section-header,
   .form-actions {
     align-items: stretch;
     flex-direction: column;
@@ -362,8 +389,10 @@ textarea {
   .band-item,
   .band-card-main,
   .band-actions,
-  .edit-actions {
+  .edit-actions,
+  .member-row {
     align-items: stretch;
+    display: flex;
     flex-direction: column;
   }
 }

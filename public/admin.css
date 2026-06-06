@@ -32,6 +32,14 @@ button {
   padding: 0 16px;
 }
 
+input[type="file"] {
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
@@ -58,6 +66,20 @@ button:disabled {
 .secondary-button {
   background: #dfe7ea;
   color: #172026;
+}
+
+.photo-button {
+  align-items: center;
+  background: #176b63;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  width: fit-content;
 }
 
 .danger-button {
@@ -169,7 +191,8 @@ label {
   gap: 7px;
 }
 
-label span {
+label span,
+.photo-field > span {
   color: #304149;
   font-size: 14px;
   font-weight: 700;
@@ -186,6 +209,31 @@ textarea {
 
 textarea {
   resize: vertical;
+}
+
+.photo-field {
+  display: grid;
+  gap: 7px;
+  position: relative;
+}
+
+.photo-preview {
+  align-items: center;
+  background: #edf2f3;
+  border: 1px solid #d9e1e4;
+  border-radius: 8px;
+  color: #5b6b73;
+  display: flex;
+  min-height: 78px;
+  overflow: hidden;
+  padding: 8px;
+}
+
+.photo-preview img {
+  border-radius: 6px;
+  height: 70px;
+  object-fit: cover;
+  width: 70px;
 }
 
 .status {

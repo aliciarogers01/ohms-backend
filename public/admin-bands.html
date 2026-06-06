@@ -44,10 +44,13 @@
               <input id="years_active" name="years_active" type="text" placeholder="1973-present">
             </label>
 
-            <label>
-              <span>Picture URL</span>
-              <input id="picture_url" name="picture_url" type="url" inputmode="url">
-            </label>
+            <div class="photo-field">
+              <span>Picture</span>
+              <input id="picture_url" name="picture_url" type="hidden">
+              <input id="picture_file" name="picture_file" type="file" accept="image/*">
+              <label class="photo-button" for="picture_file">Select Photo</label>
+              <div class="photo-preview" data-photo-preview>No photo selected</div>
+            </div>
           </div>
 
           <label>

@@ -29,6 +29,86 @@ function bandPayload(form) {
   };
 }
 
+async function uploadPhoto(file) {
+  const signatureResponse = await fetch("/cloudinary/signature");
+  const signatureData = await signatureResponse.json();
+
+  if (!signatureResponse.ok || !signatureData.ok) {
+    throw new Error(signatureData.error || "Cloudinary upload is not configured");
+  }
+
+  const uploadData = new FormData();
+  uploadData.append("file", file);
+  uploadData.append("api_key", signatureData.apiKey);
+  uploadData.append("timestamp", signatureData.timestamp);
+  uploadData.append("signature", signatureData.signature);
+  uploadData.append("folder", signatureData.folder);
+
+  const uploadResponse = await fetch(
+    `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/image/upload`,
+    {
+      method: "POST",
+      body: uploadData,
+    },
+  );
+  const uploadResult = await uploadResponse.json();
+
+  if (!uploadResponse.ok || !uploadResult.secure_url) {
+    throw new Error(uploadResult.error?.message || "Photo upload failed");
+  }
+
+  return uploadResult.secure_url;
+}
+
+function setPhotoPreview(preview, url) {
+  preview.innerHTML = "";
+
+  if (!url) {
+    preview.textContent = "No photo selected";
+    return;
+  }
+
+  const image = document.createElement("img");
+  image.src = url;
+  image.alt = "Selected band photo";
+  preview.appendChild(image);
+}
+
+function connectPhotoUpload(form) {
+  const fileInput = form.querySelector("[name='picture_file']");
+  const urlInput = form.querySelector("[name='picture_url']");
+  const preview = form.querySelector("[data-photo-preview]");
+
+  if (!fileInput || !urlInput || !preview) {
+    return;
+  }
+
+  setPhotoPreview(preview, urlInput.value);
+
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files[0];
+
+    if (!file) {
+      return;
+    }
+
+    setStatus("Uploading photo...");
+    fileInput.disabled = true;
+
+    try {
+      const photoUrl = await uploadPhoto(file);
+      urlInput.value = photoUrl;
+      setPhotoPreview(preview, photoUrl);
+      setStatus("Photo uploaded.", "success");
+    } catch (error) {
+      fileInput.value = "";
+      setStatus(error.message, "error");
+    } finally {
+      fileInput.disabled = false;
+    }
+  });
+}
+
 function createButton(text, className, handler) {
   const button = document.createElement("button");
   button.type = "button";
@@ -116,10 +196,13 @@ function createEditCard(band) {
         <span>Years Active</span>
         <input name="years_active" type="text" placeholder="1973-present">
       </label>
-      <label>
-        <span>Picture URL</span>
-        <input name="picture_url" type="url" inputmode="url">
-      </label>
+      <div class="photo-field">
+        <span>Picture</span>
+        <input name="picture_url" type="hidden">
+        <input id="picture_file_${band.id}" name="picture_file" type="file" accept="image/*">
+        <label class="photo-button" for="picture_file_${band.id}">Select Photo</label>
+        <div class="photo-preview" data-photo-preview>No photo selected</div>
+      </div>
     </div>
     <label>
       <span>Notes</span>
@@ -137,6 +220,7 @@ function createEditCard(band) {
   form.elements.years_active.value = band.years_active || "";
   form.elements.picture_url.value = band.picture_url || "";
   form.elements.notes.value = band.notes || "";
+  connectPhotoUpload(form);
 
   form.addEventListener("submit", (event) => updateBand(event, band.id));
   form.querySelector("[data-cancel]").addEventListener("click", () => {
@@ -283,5 +367,6 @@ async function deleteBand(band) {
 
 bandForm.addEventListener("submit", addBand);
 refreshButton.addEventListener("click", loadBands);
+connectPhotoUpload(bandForm);
 
 loadBands();

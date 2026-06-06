@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const pool = require("./db");
 const createBandsRouter = require("./routes/bands");
+const createCloudinaryRouter = require("./routes/cloudinary");
 const createSystemRouter = require("./routes/system");
 
 const app = express();
@@ -23,6 +24,7 @@ app.get("/admin/bands", (req, res) => {
 
 app.use(createSystemRouter(pool));
 app.use("/bands", createBandsRouter(pool));
+app.use("/cloudinary", createCloudinaryRouter());
 app.use("/list-bands", createBandsRouter(pool));
 
 const PORT = process.env.PORT || 3000;

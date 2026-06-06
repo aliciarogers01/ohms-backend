@@ -22,7 +22,7 @@ app.get("/health", (req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/setup-bands-table", async (req, res) => {
+app.get("/add-test-band", async (req, res) => {
     if (!pool) {
       return res.status(500).json({
         ok: false,
@@ -31,26 +31,24 @@ app.get("/setup-bands-table", async (req, res) => {
     }
   
     try {
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS bands (
-          id SERIAL PRIMARY KEY,
-          name TEXT NOT NULL,
-          city TEXT,
-          state TEXT DEFAULT 'OH',
-          notes TEXT,
-          created_at TIMESTAMP DEFAULT NOW()
-        );
-      `);
+      const result = await pool.query(
+        `
+        INSERT INTO bands (name, city, state, notes)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *;
+        `,
+        ["Devo", "Akron", "OH", "Test band added from backend route"]
+      );
   
       res.json({
         ok: true,
-        message: "bands table is ready",
+        band: result.rows[0],
       });
     } catch (error) {
-      console.error("Setup bands table failed:", error);
+      console.error("Add test band failed:", error);
       res.status(500).json({
         ok: false,
-        error: "Failed to create bands table",
+        error: "Failed to add test band",
       });
     }
   });

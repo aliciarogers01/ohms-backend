@@ -287,22 +287,6 @@ function createDisplayCard(artist) {
 
   content.append(name, roles, meta);
 
-  if (artist.bands && artist.bands.length) {
-    const linkedBands = document.createElement("div");
-    linkedBands.className = "band-members-summary";
-
-    const bandsTitle = document.createElement("div");
-    bandsTitle.className = "band-members-title";
-    bandsTitle.textContent = "Bands";
-
-    const bandsNames = document.createElement("div");
-    bandsNames.className = "band-members-names";
-    bandsNames.textContent = artist.bands.map((band) => band.name).join(", ");
-
-    linkedBands.append(bandsTitle, bandsNames);
-    content.appendChild(linkedBands);
-  }
-
   const cardMain = document.createElement("div");
   cardMain.className = "band-card-main";
   cardMain.append(picture, content);

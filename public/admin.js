@@ -3,17 +3,44 @@ const bandCount = document.querySelector("#bandCount");
 const bandForm = document.querySelector("#bandForm");
 const refreshButton = document.querySelector("#refreshButton");
 const submitButton = document.querySelector("#submitButton");
+const editRecordButton = document.querySelector("#editRecordButton");
 const cancelEditButton = document.querySelector("#cancelEditButton");
+const deleteRecordButton = document.querySelector("#deleteRecordButton");
 const statusMessage = document.querySelector("#statusMessage");
 const bandMembersList = document.querySelector("#bandMembersList");
 const addMemberButton = document.querySelector("#addMemberButton");
 
 let editingBandId = null;
+let selectedBand = null;
 let artists = [];
 
 function setStatus(message, type = "") {
   statusMessage.textContent = message;
   statusMessage.className = `status ${type}`.trim();
+}
+
+function setBandFormControlsEnabled(enabled) {
+  bandForm.querySelectorAll("input, select, textarea").forEach((control) => {
+    control.disabled = !enabled;
+  });
+
+  addMemberButton.disabled = !enabled;
+  bandMembersList.querySelectorAll("button").forEach((button) => {
+    button.disabled = !enabled;
+  });
+}
+
+function setBandFormMode(mode) {
+  const selectedMode = mode === "view" || mode === "edit";
+  const enabled = mode === "add" || mode === "edit";
+
+  setBandFormControlsEnabled(enabled);
+  editRecordButton.classList.toggle("hidden", !selectedMode);
+  cancelEditButton.classList.toggle("hidden", !selectedMode);
+  deleteRecordButton.classList.toggle("hidden", !selectedMode);
+  submitButton.textContent = mode === "add" ? "Add Band" : "Save Band";
+  submitButton.disabled = mode === "view";
+  editRecordButton.disabled = mode === "edit";
 }
 
 function bandLocation(band) {
@@ -300,20 +327,7 @@ function createDisplayCard(band) {
   cardMain.className = "band-card-main";
   cardMain.append(picture, content);
 
-  const actions = document.createElement("div");
-  actions.className = "band-actions";
-  actions.append(
-    createButton("Edit", "secondary-button", (event) => {
-      event.stopPropagation();
-      populateBandForm(band);
-    }),
-    createButton("Delete", "danger-button", (event) => {
-      event.stopPropagation();
-      deleteBand(band);
-    }),
-  );
-
-  item.append(cardMain, actions);
+  item.append(cardMain);
   return item;
 }
 
@@ -392,6 +406,7 @@ async function addBand(event) {
 
 function populateBandForm(band) {
   editingBandId = band.id;
+  selectedBand = band;
   bandForm.elements.name.value = band.name || "";
   bandForm.elements.city.value = band.city || "";
   bandForm.elements.state.value = band.state || "";
@@ -400,20 +415,19 @@ function populateBandForm(band) {
   bandForm.elements.notes.value = band.notes || "";
   renderMembers(bandForm, band.members);
   setMainPhotoPreview(band.picture_url);
-  submitButton.textContent = "Save Band";
-  cancelEditButton.classList.remove("hidden");
-  setStatus(`Editing ${band.name}.`, "success");
+  setBandFormMode("view");
+  setStatus(`Selected ${band.name}.`, "success");
   bandForm.scrollIntoView({ behavior: "smooth", block: "start" });
-  bandForm.elements.name.focus();
+  editRecordButton.focus();
 }
 
 function resetBandForm() {
   editingBandId = null;
+  selectedBand = null;
   bandForm.reset();
   renderMembers(bandForm);
   setMainPhotoPreview("");
-  submitButton.textContent = "Add Band";
-  cancelEditButton.classList.add("hidden");
+  setBandFormMode("add");
 }
 
 async function deleteBand(band) {
@@ -449,9 +463,23 @@ async function deleteBand(band) {
 bandForm.addEventListener("submit", addBand);
 refreshButton.addEventListener("click", loadBands);
 addMemberButton.addEventListener("click", () => addMemberRow());
+editRecordButton.addEventListener("click", () => {
+  if (!selectedBand) {
+    return;
+  }
+
+  setBandFormMode("edit");
+  setStatus(`Editing ${selectedBand.name}.`, "success");
+  bandForm.elements.name.focus();
+});
 cancelEditButton.addEventListener("click", () => {
   resetBandForm();
   setStatus("Ready to add a band.");
+});
+deleteRecordButton.addEventListener("click", () => {
+  if (selectedBand) {
+    deleteBand(selectedBand);
+  }
 });
 connectPhotoUpload(bandForm);
 

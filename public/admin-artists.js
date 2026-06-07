@@ -3,17 +3,44 @@ const artistCount = document.querySelector("#artistCount");
 const artistForm = document.querySelector("#artistForm");
 const refreshButton = document.querySelector("#refreshButton");
 const submitButton = document.querySelector("#submitButton");
+const editRecordButton = document.querySelector("#editRecordButton");
 const cancelEditButton = document.querySelector("#cancelEditButton");
+const deleteRecordButton = document.querySelector("#deleteRecordButton");
 const statusMessage = document.querySelector("#statusMessage");
 const artistBandsList = document.querySelector("#artistBandsList");
 const addBandButton = document.querySelector("#addBandButton");
 
 let editingArtistId = null;
+let selectedArtist = null;
 let bands = [];
 
 function setStatus(message, type = "") {
   statusMessage.textContent = message;
   statusMessage.className = `status ${type}`.trim();
+}
+
+function setArtistFormControlsEnabled(enabled) {
+  artistForm.querySelectorAll("input, select, textarea").forEach((control) => {
+    control.disabled = !enabled;
+  });
+
+  addBandButton.disabled = !enabled;
+  artistBandsList.querySelectorAll("button").forEach((button) => {
+    button.disabled = !enabled;
+  });
+}
+
+function setArtistFormMode(mode) {
+  const selectedMode = mode === "view" || mode === "edit";
+  const enabled = mode === "add" || mode === "edit";
+
+  setArtistFormControlsEnabled(enabled);
+  editRecordButton.classList.toggle("hidden", !selectedMode);
+  cancelEditButton.classList.toggle("hidden", !selectedMode);
+  deleteRecordButton.classList.toggle("hidden", !selectedMode);
+  submitButton.textContent = mode === "add" ? "Add Artist" : "Save Artist";
+  submitButton.disabled = mode === "view";
+  editRecordButton.disabled = mode === "edit";
 }
 
 function artistLocation(artist) {
@@ -300,20 +327,7 @@ function createDisplayCard(artist) {
   cardMain.className = "band-card-main";
   cardMain.append(picture, content);
 
-  const actions = document.createElement("div");
-  actions.className = "band-actions";
-  actions.append(
-    createButton("Edit", "secondary-button", (event) => {
-      event.stopPropagation();
-      populateArtistForm(artist);
-    }),
-    createButton("Delete", "danger-button", (event) => {
-      event.stopPropagation();
-      deleteArtist(artist);
-    }),
-  );
-
-  item.append(cardMain, actions);
+  item.append(cardMain);
   return item;
 }
 
@@ -392,6 +406,7 @@ async function addArtist(event) {
 
 function populateArtistForm(artist) {
   editingArtistId = artist.id;
+  selectedArtist = artist;
   artistForm.elements.name.value = artist.name || "";
   artistForm.elements.roles.value = artist.roles || "";
   artistForm.elements.city.value = artist.city || "";
@@ -400,20 +415,19 @@ function populateArtistForm(artist) {
   artistForm.elements.notes.value = artist.notes || "";
   renderArtistBands(artistForm, artist.bands);
   setMainPhotoPreview(artist.picture_url);
-  submitButton.textContent = "Save Artist";
-  cancelEditButton.classList.remove("hidden");
-  setStatus(`Editing ${artist.name}.`, "success");
+  setArtistFormMode("view");
+  setStatus(`Selected ${artist.name}.`, "success");
   artistForm.scrollIntoView({ behavior: "smooth", block: "start" });
-  artistForm.elements.name.focus();
+  editRecordButton.focus();
 }
 
 function resetArtistForm() {
   editingArtistId = null;
+  selectedArtist = null;
   artistForm.reset();
   renderArtistBands(artistForm);
   setMainPhotoPreview("");
-  submitButton.textContent = "Add Artist";
-  cancelEditButton.classList.add("hidden");
+  setArtistFormMode("add");
 }
 
 async function deleteArtist(artist) {
@@ -449,9 +463,23 @@ async function deleteArtist(artist) {
 artistForm.addEventListener("submit", addArtist);
 refreshButton.addEventListener("click", () => Promise.all([loadBands(), loadArtists()]));
 addBandButton.addEventListener("click", () => addBandRow());
+editRecordButton.addEventListener("click", () => {
+  if (!selectedArtist) {
+    return;
+  }
+
+  setArtistFormMode("edit");
+  setStatus(`Editing ${selectedArtist.name}.`, "success");
+  artistForm.elements.name.focus();
+});
 cancelEditButton.addEventListener("click", () => {
   resetArtistForm();
   setStatus("Ready to add an artist.");
+});
+deleteRecordButton.addEventListener("click", () => {
+  if (selectedArtist) {
+    deleteArtist(selectedArtist);
+  }
 });
 connectPhotoUpload(artistForm);
 

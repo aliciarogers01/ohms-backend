@@ -9,6 +9,7 @@ const deleteRecordButton = document.querySelector("#deleteRecordButton");
 const statusMessage = document.querySelector("#statusMessage");
 const artistBandsList = document.querySelector("#artistBandsList");
 const addBandButton = document.querySelector("#addBandButton");
+const bandsOptions = document.querySelector("#bandsOptions");
 
 let editingArtistId = null;
 let selectedArtist = null;
@@ -64,14 +65,13 @@ function artistPayload(form) {
 function artistBandPayload(form) {
   return [...form.querySelectorAll("[data-band-row]")]
     .map((row) => {
-      const select = row.querySelector("[data-band-select]");
       const input = row.querySelector("[data-band-name]");
-      const bandId = Number(select.value);
       const name = input.value.trim();
+      const band = findBandByName(name);
 
       return {
-        band_id: validBandId(bandId) ? bandId : null,
-        name,
+        band_id: band ? band.id : null,
+        name: band ? "" : name,
       };
     })
     .filter((band) => band.band_id || band.name);
@@ -79,6 +79,23 @@ function artistBandPayload(form) {
 
 function validBandId(id) {
   return Number.isInteger(id) && id > 0;
+}
+
+function findBandByName(name) {
+  const normalizedName = name.trim().toLowerCase();
+  return bands.find((band) => (band.name || "").trim().toLowerCase() === normalizedName);
+}
+
+function renderBandOptions() {
+  bandsOptions.innerHTML = "";
+
+  [...bands]
+    .sort((first, second) => (first.name || "").localeCompare(second.name || "", undefined, { sensitivity: "base" }))
+    .forEach((band) => {
+      const option = document.createElement("option");
+      option.value = band.name;
+      bandsOptions.appendChild(option);
+    });
 }
 
 async function loadBands() {
@@ -91,8 +108,10 @@ async function loadBands() {
     }
 
     bands = data.bands;
+    renderBandOptions();
   } catch (error) {
     bands = [];
+    renderBandOptions();
   }
 }
 
@@ -101,70 +120,21 @@ function createBandRow(band = {}) {
   row.className = "member-row";
   row.dataset.bandRow = "";
 
-  const selectLabel = document.createElement("label");
-  const selectText = document.createElement("span");
-  selectText.textContent = "Existing Band";
-
-  const select = document.createElement("select");
-  select.dataset.bandSelect = "";
-
-  const emptyOption = document.createElement("option");
-  emptyOption.value = "";
-  emptyOption.textContent = bands.length ? "Select band" : "No bands yet";
-  select.appendChild(emptyOption);
-
-  bands.forEach((optionBand) => {
-    const option = document.createElement("option");
-    option.value = optionBand.id;
-    option.textContent = optionBand.name;
-    select.appendChild(option);
-  });
-
-  if (validBandId(band.id)) {
-    const hasLinkedOption = [...select.options].some((option) => Number(option.value) === band.id);
-
-    if (!hasLinkedOption) {
-      const linkedOption = document.createElement("option");
-      linkedOption.value = band.id;
-      linkedOption.textContent = band.name;
-      select.appendChild(linkedOption);
-    }
-
-    select.value = String(band.id);
-  }
-
-  selectLabel.append(selectText, select);
-
   const inputLabel = document.createElement("label");
   const inputText = document.createElement("span");
-  inputText.textContent = "New Band";
+  inputText.textContent = "Band";
 
   const input = document.createElement("input");
   input.type = "text";
+  input.setAttribute("list", "bandsOptions");
   input.autocomplete = "off";
-  input.placeholder = "Type name if not listed";
+  input.placeholder = "Type a band name";
   input.dataset.bandName = "";
-
-  if (!validBandId(band.id)) {
-    input.value = band.name || "";
-  }
-
-  select.addEventListener("change", () => {
-    if (select.value) {
-      input.value = "";
-    }
-  });
-
-  input.addEventListener("input", () => {
-    if (input.value.trim()) {
-      select.value = "";
-    }
-  });
+  input.value = band.name || "";
 
   inputLabel.append(inputText, input);
 
   row.append(
-    selectLabel,
     inputLabel,
     createButton("Remove", "secondary-button", () => {
       row.remove();

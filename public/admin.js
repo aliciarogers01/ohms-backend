@@ -9,6 +9,7 @@ const deleteRecordButton = document.querySelector("#deleteRecordButton");
 const statusMessage = document.querySelector("#statusMessage");
 const bandMembersList = document.querySelector("#bandMembersList");
 const addMemberButton = document.querySelector("#addMemberButton");
+const artistsOptions = document.querySelector("#artistsOptions");
 
 let editingBandId = null;
 let selectedBand = null;
@@ -64,14 +65,13 @@ function bandPayload(form) {
 function memberPayload(form) {
   return [...form.querySelectorAll("[data-member-row]")]
     .map((row) => {
-      const select = row.querySelector("[data-member-select]");
       const input = row.querySelector("[data-member-name]");
-      const artistId = Number(select.value);
       const name = input.value.trim();
+      const artist = findArtistByName(name);
 
       return {
-        artist_id: validArtistId(artistId) ? artistId : null,
-        name,
+        artist_id: artist ? artist.id : null,
+        name: artist ? "" : name,
       };
     })
     .filter((member) => member.artist_id || member.name);
@@ -79,6 +79,23 @@ function memberPayload(form) {
 
 function validArtistId(id) {
   return Number.isInteger(id) && id > 0;
+}
+
+function findArtistByName(name) {
+  const normalizedName = name.trim().toLowerCase();
+  return artists.find((artist) => (artist.name || "").trim().toLowerCase() === normalizedName);
+}
+
+function renderArtistOptions() {
+  artistsOptions.innerHTML = "";
+
+  [...artists]
+    .sort((first, second) => (first.name || "").localeCompare(second.name || "", undefined, { sensitivity: "base" }))
+    .forEach((artist) => {
+      const option = document.createElement("option");
+      option.value = artist.name;
+      artistsOptions.appendChild(option);
+    });
 }
 
 async function loadArtists() {
@@ -91,8 +108,10 @@ async function loadArtists() {
     }
 
     artists = data.artists;
+    renderArtistOptions();
   } catch (error) {
     artists = [];
+    renderArtistOptions();
   }
 }
 
@@ -101,70 +120,21 @@ function createMemberRow(member = {}) {
   row.className = "member-row";
   row.dataset.memberRow = "";
 
-  const selectLabel = document.createElement("label");
-  const selectText = document.createElement("span");
-  selectText.textContent = "Existing Artist";
-
-  const select = document.createElement("select");
-  select.dataset.memberSelect = "";
-
-  const emptyOption = document.createElement("option");
-  emptyOption.value = "";
-  emptyOption.textContent = artists.length ? "Select artist" : "No artists yet";
-  select.appendChild(emptyOption);
-
-  artists.forEach((artist) => {
-    const option = document.createElement("option");
-    option.value = artist.id;
-    option.textContent = artist.name;
-    select.appendChild(option);
-  });
-
-  if (validArtistId(member.id)) {
-    const hasLinkedOption = [...select.options].some((option) => Number(option.value) === member.id);
-
-    if (!hasLinkedOption) {
-      const linkedOption = document.createElement("option");
-      linkedOption.value = member.id;
-      linkedOption.textContent = member.name;
-      select.appendChild(linkedOption);
-    }
-
-    select.value = String(member.id);
-  }
-
-  selectLabel.append(selectText, select);
-
   const inputLabel = document.createElement("label");
   const inputText = document.createElement("span");
-  inputText.textContent = "New Artist";
+  inputText.textContent = "Artist";
 
   const input = document.createElement("input");
   input.type = "text";
+  input.setAttribute("list", "artistsOptions");
   input.autocomplete = "off";
-  input.placeholder = "Type name if not listed";
+  input.placeholder = "Type an artist name";
   input.dataset.memberName = "";
-
-  if (!validArtistId(member.id)) {
-    input.value = member.name || "";
-  }
-
-  select.addEventListener("change", () => {
-    if (select.value) {
-      input.value = "";
-    }
-  });
-
-  input.addEventListener("input", () => {
-    if (input.value.trim()) {
-      select.value = "";
-    }
-  });
+  input.value = member.name || "";
 
   inputLabel.append(inputText, input);
 
   row.append(
-    selectLabel,
     inputLabel,
     createButton("Remove", "secondary-button", () => {
       row.remove();

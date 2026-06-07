@@ -7,11 +7,23 @@ const editRecordButton = document.querySelector("#editRecordButton");
 const cancelEditButton = document.querySelector("#cancelEditButton");
 const deleteRecordButton = document.querySelector("#deleteRecordButton");
 const statusMessage = document.querySelector("#statusMessage");
+const bandsOptions = document.querySelector("#bandsOptions");
+const albumsOptions = document.querySelector("#albumsOptions");
 
 let editingSongId = null;
 let selectedSong = null;
 let bands = [];
 let albums = [];
+
+function findBandByName(name) {
+  const normalizedName = name.trim().toLowerCase();
+  return bands.find((band) => (band.name || "").trim().toLowerCase() === normalizedName);
+}
+
+function findAlbumByTitle(title) {
+  const normalizedTitle = title.trim().toLowerCase();
+  return albums.find((album) => (album.title || "").trim().toLowerCase() === normalizedTitle);
+}
 
 function setStatus(message, type = "") {
   statusMessage.textContent = message;
@@ -39,13 +51,17 @@ function setSongFormMode(mode) {
 
 function songPayload(form) {
   const formData = new FormData(form);
+  const bandName = formData.get("band_name").trim();
+  const albumTitle = formData.get("album_title").trim();
+  const band = findBandByName(bandName);
+  const album = findAlbumByTitle(albumTitle);
 
   return {
     title: formData.get("title").trim(),
-    band_id: Number(formData.get("band_id")) || null,
-    band_name: formData.get("band_name").trim(),
-    album_id: Number(formData.get("album_id")) || null,
-    album_title: formData.get("album_title").trim(),
+    band_id: band ? band.id : null,
+    band_name: band ? "" : bandName,
+    album_id: album ? album.id : null,
+    album_title: album ? "" : albumTitle,
     release_year: formData.get("release_year").trim(),
     cover_url: formData.get("cover_url").trim(),
     notes: formData.get("notes").trim(),
@@ -86,50 +102,27 @@ async function loadAlbums() {
   }
 }
 
-function renderBandOptions(selectedId = "") {
-  const select = songForm.elements.band_id;
-  select.innerHTML = "";
-
-  const emptyOption = document.createElement("option");
-  emptyOption.value = "";
-  emptyOption.textContent = bands.length ? "Select band" : "No bands yet";
-  select.appendChild(emptyOption);
-
+function renderBandOptions() {
+  bandsOptions.innerHTML = "";
   [...bands]
     .sort((first, second) => (first.name || "").localeCompare(second.name || "", undefined, { sensitivity: "base" }))
     .forEach((band) => {
       const option = document.createElement("option");
-      option.value = band.id;
-      option.textContent = band.name;
-      select.appendChild(option);
+      option.value = band.name;
+      bandsOptions.appendChild(option);
     });
-
-  if (selectedId) {
-    select.value = String(selectedId);
-  }
 }
 
-function renderAlbumOptions(selectedId = "") {
-  const select = songForm.elements.album_id;
-  select.innerHTML = "";
-
-  const emptyOption = document.createElement("option");
-  emptyOption.value = "";
-  emptyOption.textContent = albums.length ? "Select album" : "No albums yet";
-  select.appendChild(emptyOption);
-
+function renderAlbumOptions() {
+  albumsOptions.innerHTML = "";
   [...albums]
     .sort((first, second) => (first.title || "").localeCompare(second.title || "", undefined, { sensitivity: "base" }))
     .forEach((album) => {
       const option = document.createElement("option");
-      option.value = album.id;
-      option.textContent = album.band_name ? `${album.title} - ${album.band_name}` : album.title;
-      select.appendChild(option);
+      option.value = album.title;
+      option.label = album.band_name ? `${album.title} - ${album.band_name}` : album.title;
+      albumsOptions.appendChild(option);
     });
-
-  if (selectedId) {
-    select.value = String(selectedId);
-  }
 }
 
 async function uploadPhoto(file) {
@@ -339,10 +332,8 @@ function populateSongForm(song) {
   editingSongId = song.id;
   selectedSong = song;
   songForm.elements.title.value = song.title || "";
-  renderBandOptions(song.band_id || "");
-  renderAlbumOptions(song.album_id || "");
-  songForm.elements.band_name.value = "";
-  songForm.elements.album_title.value = "";
+  songForm.elements.band_name.value = song.band_name || "";
+  songForm.elements.album_title.value = song.album_title || "";
   songForm.elements.release_year.value = song.release_year || "";
   songForm.elements.cover_url.value = song.cover_url || "";
   songForm.elements.notes.value = song.notes || "";
@@ -390,27 +381,6 @@ async function deleteSong(song) {
     setStatus(error.message, "error");
   }
 }
-
-songForm.elements.band_id.addEventListener("change", () => {
-  if (songForm.elements.band_id.value) {
-    songForm.elements.band_name.value = "";
-  }
-});
-songForm.elements.band_name.addEventListener("input", () => {
-  if (songForm.elements.band_name.value.trim()) {
-    songForm.elements.band_id.value = "";
-  }
-});
-songForm.elements.album_id.addEventListener("change", () => {
-  if (songForm.elements.album_id.value) {
-    songForm.elements.album_title.value = "";
-  }
-});
-songForm.elements.album_title.addEventListener("input", () => {
-  if (songForm.elements.album_title.value.trim()) {
-    songForm.elements.album_id.value = "";
-  }
-});
 
 songForm.addEventListener("submit", addSong);
 refreshButton.addEventListener("click", () => Promise.all([loadBands(), loadAlbums(), loadSongs()]));

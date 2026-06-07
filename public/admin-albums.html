@@ -34,17 +34,11 @@
             <input id="title" name="title" type="text" autocomplete="off" required>
           </label>
 
-          <div class="form-row">
-            <label>
-              <span>Existing Band</span>
-              <select id="band_id" name="band_id"></select>
-            </label>
-
-            <label>
-              <span>New Band</span>
-              <input id="band_name" name="band_name" type="text" autocomplete="off" placeholder="Type name if not listed">
-            </label>
-          </div>
+          <label>
+            <span>Band</span>
+            <input id="band_name" name="band_name" type="text" list="bandsOptions" autocomplete="off" placeholder="Type a band name">
+          </label>
+          <datalist id="bandsOptions"></datalist>
 
           <div class="form-row">
             <label>
@@ -72,6 +66,7 @@
               <button id="addSongButton" type="button" class="secondary-button">Add Song</button>
             </div>
             <div id="albumSongsList" class="member-list"></div>
+            <datalist id="songsOptions"></datalist>
           </section>
 
           <div class="form-actions">

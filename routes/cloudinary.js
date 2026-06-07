@@ -9,8 +9,10 @@ function createCloudinaryRouter() {
     const apiKey = process.env.CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
     const allowedFolders = {
+      albums: "ohms/albums",
       artists: "ohms/artists",
       bands: process.env.CLOUDINARY_FOLDER || "ohms/bands",
+      songs: "ohms/songs",
     };
     const folder = allowedFolders[req.query.folder] || allowedFolders.bands;
 

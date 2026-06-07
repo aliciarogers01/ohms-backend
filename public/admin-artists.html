@@ -7,8 +7,16 @@
     <link rel="stylesheet" href="/admin.css">
   </head>
   <body>
-    <main class="admin-shell">
-      <section class="panel">
+    <main class="admin-shell admin-workspace">
+      <section class="panel list-panel">
+        <div class="list-header">
+          <h2>Current Artists</h2>
+          <span id="artistCount" class="count">0</span>
+        </div>
+        <div id="artistsList" class="bands-list"></div>
+      </section>
+
+      <section class="panel editor-panel">
         <div class="panel-header">
           <div>
             <p class="eyebrow">OHMS</p>
@@ -74,13 +82,6 @@
         </form>
       </section>
 
-      <section class="panel">
-        <div class="list-header">
-          <h2>Current Artists</h2>
-          <span id="artistCount" class="count">0</span>
-        </div>
-        <div id="artistsList" class="bands-list"></div>
-      </section>
     </main>
 
     <script src="/admin-artists.js"></script>

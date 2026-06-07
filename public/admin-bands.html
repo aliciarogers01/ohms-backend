@@ -7,8 +7,16 @@
     <link rel="stylesheet" href="/admin.css">
   </head>
   <body>
-    <main class="admin-shell">
-      <section class="panel">
+    <main class="admin-shell admin-workspace">
+      <section class="panel list-panel">
+        <div class="list-header">
+          <h2>Current Bands</h2>
+          <span id="bandCount" class="count">0</span>
+        </div>
+        <div id="bandsList" class="bands-list"></div>
+      </section>
+
+      <section class="panel editor-panel">
         <div class="panel-header">
           <div>
             <p class="eyebrow">OHMS</p>
@@ -76,13 +84,6 @@
         </form>
       </section>
 
-      <section class="panel">
-        <div class="list-header">
-          <h2>Current Bands</h2>
-          <span id="bandCount" class="count">0</span>
-        </div>
-        <div id="bandsList" class="bands-list"></div>
-      </section>
     </main>
 
     <script src="/admin.js"></script>

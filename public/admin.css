@@ -98,11 +98,28 @@ button:disabled {
   padding: 28px;
 }
 
+.admin-workspace {
+  align-items: start;
+  grid-template-columns: minmax(240px, 1fr) minmax(0, 3fr);
+  max-width: 1280px;
+}
+
 .panel {
   background: #ffffff;
   border: 1px solid #d9e1e4;
   border-radius: 8px;
   padding: 22px;
+}
+
+.list-panel {
+  max-height: calc(100vh - 56px);
+  overflow: auto;
+  position: sticky;
+  top: 28px;
+}
+
+.editor-panel {
+  min-width: 0;
 }
 
 .panel-header,
@@ -365,6 +382,30 @@ textarea {
   width: 100%;
 }
 
+.list-panel .band-item {
+  align-items: stretch;
+  display: grid;
+  gap: 10px;
+}
+
+.list-panel .band-card-main {
+  align-items: center;
+}
+
+.list-panel .band-picture {
+  flex-basis: 54px;
+}
+
+.list-panel .band-actions {
+  justify-content: stretch;
+}
+
+.list-panel .band-actions button {
+  flex: 1;
+  min-height: 36px;
+  padding: 0 10px;
+}
+
 .band-actions,
 .edit-actions {
   align-items: center;
@@ -396,6 +437,16 @@ textarea {
 @media (max-width: 640px) {
   .admin-shell {
     padding: 16px;
+  }
+
+  .admin-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .list-panel {
+    max-height: none;
+    overflow: visible;
+    position: static;
   }
 
   .panel {

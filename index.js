@@ -21,6 +21,23 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "home.html"));
 });
 
+const topLevelPages = [
+  ["archive", "archive.html"],
+  ["wiki", "wiki.html"],
+  ["civic-club", "civic-club.html"],
+  ["fanzine", "fanzine.html"],
+  ["radio", "radio.html"],
+  ["studio", "studio.html"],
+  ["label", "label.html"],
+  ["record-store", "record-store.html"],
+];
+
+topLevelPages.forEach(([route, file]) => {
+  app.get(`/${route}`, (req, res) => {
+    res.sendFile(path.join(__dirname, "public", file));
+  });
+});
+
 app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin.html"));
 });

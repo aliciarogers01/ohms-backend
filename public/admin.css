@@ -435,6 +435,47 @@ textarea {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.radio-now-playing {
+  border-top: 1px solid #d9e1e4;
+  margin-top: 22px;
+  padding-top: 22px;
+}
+
+.now-playing-card {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+}
+
+.now-playing-picture {
+  align-items: center;
+  aspect-ratio: 1;
+  background: #edf2f3;
+  border: 1px solid #d9e1e4;
+  border-radius: 8px;
+  color: #5b6b73;
+  display: flex;
+  flex: 0 0 160px;
+  justify-content: center;
+  overflow: hidden;
+  text-align: center;
+}
+
+.now-playing-picture img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.now-playing-details {
+  display: grid;
+  gap: 10px;
+}
+
+.now-playing-link {
+  width: fit-content;
+}
+
 @media (max-width: 640px) {
   .admin-shell {
     padding: 16px;
@@ -470,6 +511,7 @@ textarea {
   .band-card-main,
   .band-actions,
   .edit-actions,
+  .now-playing-card,
   .member-row {
     align-items: stretch;
     display: flex;

@@ -8,6 +8,7 @@ const createAlbumsRouter = require("./routes/albums");
 const createArtistsRouter = require("./routes/artists");
 const createBandsRouter = require("./routes/bands");
 const createCloudinaryRouter = require("./routes/cloudinary");
+const createSamRouter = require("./routes/sam");
 const createSongsRouter = require("./routes/songs");
 const createSystemRouter = require("./routes/system");
 
@@ -63,6 +64,7 @@ app.use("/albums", createAlbumsRouter(pool));
 app.use("/artists", createArtistsRouter(pool));
 app.use("/bands", createBandsRouter(pool));
 app.use("/cloudinary", createCloudinaryRouter());
+app.use("/sam", createSamRouter());
 app.use("/songs", createSongsRouter(pool));
 app.use("/list-bands", createBandsRouter(pool));
 

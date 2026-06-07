@@ -4,8 +4,11 @@ const artistForm = document.querySelector("#artistForm");
 const refreshButton = document.querySelector("#refreshButton");
 const submitButton = document.querySelector("#submitButton");
 const statusMessage = document.querySelector("#statusMessage");
+const artistBandsList = document.querySelector("#artistBandsList");
+const addBandButton = document.querySelector("#addBandButton");
 
 let editingArtistId = null;
+let bands = [];
 
 function setStatus(message, type = "") {
   statusMessage.textContent = message;
@@ -26,7 +29,125 @@ function artistPayload(form) {
     state: formData.get("state").trim().toUpperCase(),
     picture_url: formData.get("picture_url").trim(),
     notes: formData.get("notes").trim(),
+    bands: artistBandPayload(form),
   };
+}
+
+function artistBandPayload(form) {
+  return [...form.querySelectorAll("[data-band-row]")]
+    .map((row) => {
+      const select = row.querySelector("[data-band-select]");
+      const input = row.querySelector("[data-band-name]");
+      const bandId = Number(select.value);
+      const name = input.value.trim();
+
+      return {
+        band_id: validBandId(bandId) ? bandId : null,
+        name,
+      };
+    })
+    .filter((band) => band.band_id || band.name);
+}
+
+function validBandId(id) {
+  return Number.isInteger(id) && id > 0;
+}
+
+async function loadBands() {
+  try {
+    const response = await fetch("/bands");
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || "Failed to load bands");
+    }
+
+    bands = data.bands;
+  } catch (error) {
+    bands = [];
+  }
+}
+
+function createBandRow(band = {}) {
+  const row = document.createElement("div");
+  row.className = "member-row";
+  row.dataset.bandRow = "";
+
+  const selectLabel = document.createElement("label");
+  const selectText = document.createElement("span");
+  selectText.textContent = "Existing Band";
+
+  const select = document.createElement("select");
+  select.dataset.bandSelect = "";
+
+  const emptyOption = document.createElement("option");
+  emptyOption.value = "";
+  emptyOption.textContent = bands.length ? "Select band" : "No bands yet";
+  select.appendChild(emptyOption);
+
+  bands.forEach((optionBand) => {
+    const option = document.createElement("option");
+    option.value = optionBand.id;
+    option.textContent = optionBand.name;
+    select.appendChild(option);
+  });
+
+  if (validBandId(band.id)) {
+    select.value = String(band.id);
+  }
+
+  selectLabel.append(selectText, select);
+
+  const inputLabel = document.createElement("label");
+  const inputText = document.createElement("span");
+  inputText.textContent = "New Band";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.autocomplete = "off";
+  input.placeholder = "Type name if not listed";
+  input.dataset.bandName = "";
+
+  if (!validBandId(band.id)) {
+    input.value = band.name || "";
+  }
+
+  select.addEventListener("change", () => {
+    if (select.value) {
+      input.value = "";
+    }
+  });
+
+  input.addEventListener("input", () => {
+    if (input.value.trim()) {
+      select.value = "";
+    }
+  });
+
+  inputLabel.append(inputText, input);
+
+  row.append(
+    selectLabel,
+    inputLabel,
+    createButton("Remove", "secondary-button", () => {
+      row.remove();
+    }),
+  );
+
+  return row;
+}
+
+function addBandRow(band = {}) {
+  artistBandsList.appendChild(createBandRow(band));
+}
+
+function renderArtistBands(form, linkedBands = []) {
+  const list = form.querySelector("[data-bands-list]") || artistBandsList;
+  list.innerHTML = "";
+
+  linkedBands.forEach((band) => {
+    list.appendChild(createBandRow(band));
+  });
 }
 
 async function uploadPhoto(file) {
@@ -152,6 +273,22 @@ function createDisplayCard(artist) {
 
   content.append(name, roles, meta);
 
+  if (artist.bands && artist.bands.length) {
+    const linkedBands = document.createElement("div");
+    linkedBands.className = "band-members-summary";
+
+    const bandsTitle = document.createElement("div");
+    bandsTitle.className = "band-members-title";
+    bandsTitle.textContent = "Bands";
+
+    const bandsNames = document.createElement("div");
+    bandsNames.className = "band-members-names";
+    bandsNames.textContent = artist.bands.map((band) => band.name).join(", ");
+
+    linkedBands.append(bandsTitle, bandsNames);
+    content.appendChild(linkedBands);
+  }
+
   const cardMain = document.createElement("div");
   cardMain.className = "band-card-main";
   cardMain.append(picture, content);
@@ -206,6 +343,13 @@ function createEditCard(artist) {
       <span>Notes</span>
       <textarea name="notes" rows="3"></textarea>
     </label>
+    <section class="form-section">
+      <div class="section-header">
+        <h2>Artist Bands</h2>
+        <button type="button" class="secondary-button" data-add-band>Add Band</button>
+      </div>
+      <div class="member-list" data-bands-list></div>
+    </section>
     <div class="edit-actions">
       <button type="submit">Save</button>
       <button type="button" class="secondary-button" data-cancel>Cancel</button>
@@ -219,8 +363,12 @@ function createEditCard(artist) {
   form.elements.picture_url.value = artist.picture_url || "";
   form.elements.notes.value = artist.notes || "";
   connectPhotoUpload(form);
+  renderArtistBands(form, artist.bands);
 
   form.addEventListener("submit", (event) => updateArtist(event, artist.id));
+  form.querySelector("[data-add-band]").addEventListener("click", () => {
+    form.querySelector("[data-bands-list]").appendChild(createBandRow());
+  });
   form.querySelector("[data-cancel]").addEventListener("click", () => {
     editingArtistId = null;
     loadArtists();
@@ -290,7 +438,9 @@ async function addArtist(event) {
     }
 
     artistForm.reset();
+    renderArtistBands(artistForm);
     setStatus("Artist added.", "success");
+    await loadBands();
     await loadArtists();
   } catch (error) {
     setStatus(error.message, "error");
@@ -325,6 +475,7 @@ async function updateArtist(event, artistId) {
 
     editingArtistId = null;
     setStatus("Artist updated.", "success");
+    await loadBands();
     await loadArtists();
   } catch (error) {
     setStatus(error.message, "error");
@@ -364,7 +515,8 @@ async function deleteArtist(artist) {
 }
 
 artistForm.addEventListener("submit", addArtist);
-refreshButton.addEventListener("click", loadArtists);
+refreshButton.addEventListener("click", () => Promise.all([loadBands(), loadArtists()]));
+addBandButton.addEventListener("click", () => addBandRow());
 connectPhotoUpload(artistForm);
 
-loadArtists();
+Promise.all([loadBands(), loadArtists()]);

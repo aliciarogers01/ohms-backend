@@ -332,10 +332,14 @@ function createDisplayCard(artist) {
 }
 
 function renderArtists(artists) {
-  artistCount.textContent = artists.length;
+  const sortedArtists = [...artists].sort((first, second) =>
+    (first.name || "").localeCompare(second.name || "", undefined, { sensitivity: "base" }),
+  );
+
+  artistCount.textContent = sortedArtists.length;
   artistsList.innerHTML = "";
 
-  if (!artists.length) {
+  if (!sortedArtists.length) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
     empty.textContent = "No artists yet.";
@@ -343,7 +347,7 @@ function renderArtists(artists) {
     return;
   }
 
-  artists.forEach((artist) => {
+  sortedArtists.forEach((artist) => {
     const item = createDisplayCard(artist);
     artistsList.appendChild(item);
   });

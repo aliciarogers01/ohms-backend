@@ -332,10 +332,14 @@ function createDisplayCard(band) {
 }
 
 function renderBands(bands) {
-  bandCount.textContent = bands.length;
+  const sortedBands = [...bands].sort((first, second) =>
+    (first.name || "").localeCompare(second.name || "", undefined, { sensitivity: "base" }),
+  );
+
+  bandCount.textContent = sortedBands.length;
   bandsList.innerHTML = "";
 
-  if (!bands.length) {
+  if (!sortedBands.length) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
     empty.textContent = "No bands yet.";
@@ -343,7 +347,7 @@ function renderBands(bands) {
     return;
   }
 
-  bands.forEach((band) => {
+  sortedBands.forEach((band) => {
     const item = createDisplayCard(band);
     bandsList.appendChild(item);
   });

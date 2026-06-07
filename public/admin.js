@@ -3,6 +3,7 @@ const bandCount = document.querySelector("#bandCount");
 const bandForm = document.querySelector("#bandForm");
 const refreshButton = document.querySelector("#refreshButton");
 const submitButton = document.querySelector("#submitButton");
+const cancelEditButton = document.querySelector("#cancelEditButton");
 const statusMessage = document.querySelector("#statusMessage");
 const bandMembersList = document.querySelector("#bandMembersList");
 const addMemberButton = document.querySelector("#addMemberButton");
@@ -195,6 +196,11 @@ function setPhotoPreview(preview, url) {
   preview.appendChild(image);
 }
 
+function setMainPhotoPreview(url) {
+  const preview = bandForm.querySelector("[data-photo-preview]");
+  setPhotoPreview(preview, url);
+}
+
 function connectPhotoUpload(form) {
   const fileInput = form.querySelector("[name='picture_file']");
   const urlInput = form.querySelector("[name='picture_url']");
@@ -242,6 +248,14 @@ function createButton(text, className, handler) {
 function createDisplayCard(band) {
   const item = document.createElement("article");
   item.className = "band-item";
+  item.tabIndex = 0;
+  item.addEventListener("click", () => populateBandForm(band));
+  item.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      populateBandForm(band);
+    }
+  });
 
   const picture = document.createElement("div");
   picture.className = "band-picture";
@@ -296,87 +310,17 @@ function createDisplayCard(band) {
   const actions = document.createElement("div");
   actions.className = "band-actions";
   actions.append(
-    createButton("Edit", "secondary-button", () => {
-      editingBandId = band.id;
-      loadBands();
+    createButton("Edit", "secondary-button", (event) => {
+      event.stopPropagation();
+      populateBandForm(band);
     }),
-    createButton("Delete", "danger-button", () => deleteBand(band)),
+    createButton("Delete", "danger-button", (event) => {
+      event.stopPropagation();
+      deleteBand(band);
+    }),
   );
 
   item.append(cardMain, actions);
-  return item;
-}
-
-function createEditCard(band) {
-  const item = document.createElement("article");
-  item.className = "band-item edit-item";
-
-  const form = document.createElement("form");
-  form.className = "edit-form";
-  form.innerHTML = `
-    <label>
-      <span>Name</span>
-      <input name="name" type="text" autocomplete="off" required>
-    </label>
-    <div class="form-row">
-      <label>
-        <span>City</span>
-        <input name="city" type="text" autocomplete="address-level2">
-      </label>
-      <label>
-        <span>State</span>
-        <input name="state" type="text" maxlength="2" autocomplete="address-level1">
-      </label>
-    </div>
-    <div class="form-row">
-      <label>
-        <span>Years Active</span>
-        <input name="years_active" type="text" placeholder="1973-present">
-      </label>
-      <div class="photo-field">
-        <span>Picture</span>
-        <input name="picture_url" type="hidden">
-        <input id="picture_file_${band.id}" name="picture_file" type="file" accept="image/*">
-        <label class="photo-button" for="picture_file_${band.id}">Select Photo</label>
-        <div class="photo-preview" data-photo-preview>No photo selected</div>
-      </div>
-    </div>
-    <label>
-      <span>Notes</span>
-      <textarea name="notes" rows="3"></textarea>
-    </label>
-    <section class="form-section">
-      <div class="section-header">
-        <h2>Band Members</h2>
-        <button type="button" class="secondary-button" data-add-member>Add Artist</button>
-      </div>
-      <div class="member-list" data-members-list></div>
-    </section>
-    <div class="edit-actions">
-      <button type="submit">Save</button>
-      <button type="button" class="secondary-button" data-cancel>Cancel</button>
-    </div>
-  `;
-
-  form.elements.name.value = band.name || "";
-  form.elements.city.value = band.city || "";
-  form.elements.state.value = band.state || "";
-  form.elements.years_active.value = band.years_active || "";
-  form.elements.picture_url.value = band.picture_url || "";
-  form.elements.notes.value = band.notes || "";
-  connectPhotoUpload(form);
-  renderMembers(form, band.members);
-
-  form.addEventListener("submit", (event) => updateBand(event, band.id));
-  form.querySelector("[data-add-member]").addEventListener("click", () => {
-    form.querySelector("[data-members-list]").appendChild(createMemberRow());
-  });
-  form.querySelector("[data-cancel]").addEventListener("click", () => {
-    editingBandId = null;
-    loadBands();
-  });
-
-  item.appendChild(form);
   return item;
 }
 
@@ -393,7 +337,7 @@ function renderBands(bands) {
   }
 
   bands.forEach((band) => {
-    const item = band.id === editingBandId ? createEditCard(band) : createDisplayCard(band);
+    const item = createDisplayCard(band);
     bandsList.appendChild(item);
   });
 }
@@ -423,11 +367,14 @@ async function addBand(event) {
   const band = bandPayload(bandForm);
 
   submitButton.disabled = true;
-  setStatus("Adding band...");
+  setStatus(editingBandId ? "Saving band..." : "Adding band...");
 
   try {
-    const response = await fetch("/bands", {
-      method: "POST",
+    const wasEditing = Boolean(editingBandId);
+    const url = editingBandId ? `/bands/${editingBandId}` : "/bands";
+    const method = editingBandId ? "PATCH" : "POST";
+    const response = await fetch(url, {
+      method,
       headers: {
         "Content-Type": "application/json",
       },
@@ -439,9 +386,8 @@ async function addBand(event) {
       throw new Error(data.error || "Failed to add band");
     }
 
-    bandForm.reset();
-    renderMembers(bandForm);
-    setStatus("Band added.", "success");
+    resetBandForm();
+    setStatus(wasEditing ? "Band updated." : "Band added.", "success");
     await loadArtists();
     await loadBands();
   } catch (error) {
@@ -451,39 +397,30 @@ async function addBand(event) {
   }
 }
 
-async function updateBand(event, bandId) {
-  event.preventDefault();
+function populateBandForm(band) {
+  editingBandId = band.id;
+  bandForm.elements.name.value = band.name || "";
+  bandForm.elements.city.value = band.city || "";
+  bandForm.elements.state.value = band.state || "";
+  bandForm.elements.years_active.value = band.years_active || "";
+  bandForm.elements.picture_url.value = band.picture_url || "";
+  bandForm.elements.notes.value = band.notes || "";
+  renderMembers(bandForm, band.members);
+  setMainPhotoPreview(band.picture_url);
+  submitButton.textContent = "Save Band";
+  cancelEditButton.classList.remove("hidden");
+  setStatus(`Editing ${band.name}.`, "success");
+  bandForm.scrollIntoView({ behavior: "smooth", block: "start" });
+  bandForm.elements.name.focus();
+}
 
-  const form = event.currentTarget;
-  const band = bandPayload(form);
-  const saveButton = form.querySelector("button[type='submit']");
-
-  saveButton.disabled = true;
-  setStatus("Saving band...");
-
-  try {
-    const response = await fetch(`/bands/${bandId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(band),
-    });
-    const data = await response.json();
-
-    if (!response.ok || !data.ok) {
-      throw new Error(data.error || "Failed to update band");
-    }
-
-    editingBandId = null;
-    setStatus("Band updated.", "success");
-    await loadArtists();
-    await loadBands();
-  } catch (error) {
-    setStatus(error.message, "error");
-  } finally {
-    saveButton.disabled = false;
-  }
+function resetBandForm() {
+  editingBandId = null;
+  bandForm.reset();
+  renderMembers(bandForm);
+  setMainPhotoPreview("");
+  submitButton.textContent = "Add Band";
+  cancelEditButton.classList.add("hidden");
 }
 
 async function deleteBand(band) {
@@ -506,7 +443,7 @@ async function deleteBand(band) {
     }
 
     if (editingBandId === band.id) {
-      editingBandId = null;
+      resetBandForm();
     }
 
     setStatus("Band deleted.", "success");
@@ -519,6 +456,10 @@ async function deleteBand(band) {
 bandForm.addEventListener("submit", addBand);
 refreshButton.addEventListener("click", loadBands);
 addMemberButton.addEventListener("click", () => addMemberRow());
+cancelEditButton.addEventListener("click", () => {
+  resetBandForm();
+  setStatus("Ready to add a band.");
+});
 connectPhotoUpload(bandForm);
 
 Promise.all([loadArtists(), loadBands()]);

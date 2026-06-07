@@ -86,6 +86,10 @@ button:disabled {
   background: #a12d2d;
 }
 
+.hidden {
+  display: none;
+}
+
 .admin-shell {
   display: grid;
   gap: 20px;
@@ -283,14 +287,20 @@ textarea {
 .band-item {
   border: 1px solid #d9e1e4;
   border-radius: 8px;
+  cursor: pointer;
   display: flex;
   gap: 14px;
   justify-content: space-between;
   padding: 14px;
 }
 
+.band-item:hover {
+  border-color: #176b63;
+}
+
 .edit-item {
   display: block;
+  cursor: default;
 }
 
 .band-name {

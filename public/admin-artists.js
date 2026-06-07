@@ -3,6 +3,7 @@ const artistCount = document.querySelector("#artistCount");
 const artistForm = document.querySelector("#artistForm");
 const refreshButton = document.querySelector("#refreshButton");
 const submitButton = document.querySelector("#submitButton");
+const cancelEditButton = document.querySelector("#cancelEditButton");
 const statusMessage = document.querySelector("#statusMessage");
 const artistBandsList = document.querySelector("#artistBandsList");
 const addBandButton = document.querySelector("#addBandButton");
@@ -195,6 +196,11 @@ function setPhotoPreview(preview, url) {
   preview.appendChild(image);
 }
 
+function setMainPhotoPreview(url) {
+  const preview = artistForm.querySelector("[data-photo-preview]");
+  setPhotoPreview(preview, url);
+}
+
 function connectPhotoUpload(form) {
   const fileInput = form.querySelector("[name='picture_file']");
   const urlInput = form.querySelector("[name='picture_url']");
@@ -242,6 +248,14 @@ function createButton(text, className, handler) {
 function createDisplayCard(artist) {
   const item = document.createElement("article");
   item.className = "band-item";
+  item.tabIndex = 0;
+  item.addEventListener("click", () => populateArtistForm(artist));
+  item.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      populateArtistForm(artist);
+    }
+  });
 
   const picture = document.createElement("div");
   picture.className = "band-picture";
@@ -296,85 +310,17 @@ function createDisplayCard(artist) {
   const actions = document.createElement("div");
   actions.className = "band-actions";
   actions.append(
-    createButton("Edit", "secondary-button", () => {
-      editingArtistId = artist.id;
-      loadArtists();
+    createButton("Edit", "secondary-button", (event) => {
+      event.stopPropagation();
+      populateArtistForm(artist);
     }),
-    createButton("Delete", "danger-button", () => deleteArtist(artist)),
+    createButton("Delete", "danger-button", (event) => {
+      event.stopPropagation();
+      deleteArtist(artist);
+    }),
   );
 
   item.append(cardMain, actions);
-  return item;
-}
-
-function createEditCard(artist) {
-  const item = document.createElement("article");
-  item.className = "band-item edit-item";
-
-  const form = document.createElement("form");
-  form.className = "edit-form";
-  form.innerHTML = `
-    <label>
-      <span>Name</span>
-      <input name="name" type="text" autocomplete="off" required>
-    </label>
-    <label>
-      <span>Roles</span>
-      <input name="roles" type="text" placeholder="Vocals, guitar">
-    </label>
-    <div class="form-row">
-      <label>
-        <span>City</span>
-        <input name="city" type="text" autocomplete="address-level2">
-      </label>
-      <label>
-        <span>State</span>
-        <input name="state" type="text" maxlength="2" autocomplete="address-level1">
-      </label>
-    </div>
-    <div class="photo-field">
-      <span>Picture</span>
-      <input name="picture_url" type="hidden">
-      <input id="artist_picture_file_${artist.id}" name="picture_file" type="file" accept="image/*">
-      <label class="photo-button" for="artist_picture_file_${artist.id}">Select Photo</label>
-      <div class="photo-preview" data-photo-preview>No photo selected</div>
-    </div>
-    <label>
-      <span>Notes</span>
-      <textarea name="notes" rows="3"></textarea>
-    </label>
-    <section class="form-section">
-      <div class="section-header">
-        <h2>Artist Bands</h2>
-        <button type="button" class="secondary-button" data-add-band>Add Band</button>
-      </div>
-      <div class="member-list" data-bands-list></div>
-    </section>
-    <div class="edit-actions">
-      <button type="submit">Save</button>
-      <button type="button" class="secondary-button" data-cancel>Cancel</button>
-    </div>
-  `;
-
-  form.elements.name.value = artist.name || "";
-  form.elements.roles.value = artist.roles || "";
-  form.elements.city.value = artist.city || "";
-  form.elements.state.value = artist.state || "";
-  form.elements.picture_url.value = artist.picture_url || "";
-  form.elements.notes.value = artist.notes || "";
-  connectPhotoUpload(form);
-  renderArtistBands(form, artist.bands);
-
-  form.addEventListener("submit", (event) => updateArtist(event, artist.id));
-  form.querySelector("[data-add-band]").addEventListener("click", () => {
-    form.querySelector("[data-bands-list]").appendChild(createBandRow());
-  });
-  form.querySelector("[data-cancel]").addEventListener("click", () => {
-    editingArtistId = null;
-    loadArtists();
-  });
-
-  item.appendChild(form);
   return item;
 }
 
@@ -391,7 +337,7 @@ function renderArtists(artists) {
   }
 
   artists.forEach((artist) => {
-    const item = artist.id === editingArtistId ? createEditCard(artist) : createDisplayCard(artist);
+    const item = createDisplayCard(artist);
     artistsList.appendChild(item);
   });
 }
@@ -421,11 +367,14 @@ async function addArtist(event) {
   const artist = artistPayload(artistForm);
 
   submitButton.disabled = true;
-  setStatus("Adding artist...");
+  setStatus(editingArtistId ? "Saving artist..." : "Adding artist...");
 
   try {
-    const response = await fetch("/artists", {
-      method: "POST",
+    const wasEditing = Boolean(editingArtistId);
+    const url = editingArtistId ? `/artists/${editingArtistId}` : "/artists";
+    const method = editingArtistId ? "PATCH" : "POST";
+    const response = await fetch(url, {
+      method,
       headers: {
         "Content-Type": "application/json",
       },
@@ -437,9 +386,8 @@ async function addArtist(event) {
       throw new Error(data.error || "Failed to add artist");
     }
 
-    artistForm.reset();
-    renderArtistBands(artistForm);
-    setStatus("Artist added.", "success");
+    resetArtistForm();
+    setStatus(wasEditing ? "Artist updated." : "Artist added.", "success");
     await loadBands();
     await loadArtists();
   } catch (error) {
@@ -449,39 +397,30 @@ async function addArtist(event) {
   }
 }
 
-async function updateArtist(event, artistId) {
-  event.preventDefault();
+function populateArtistForm(artist) {
+  editingArtistId = artist.id;
+  artistForm.elements.name.value = artist.name || "";
+  artistForm.elements.roles.value = artist.roles || "";
+  artistForm.elements.city.value = artist.city || "";
+  artistForm.elements.state.value = artist.state || "";
+  artistForm.elements.picture_url.value = artist.picture_url || "";
+  artistForm.elements.notes.value = artist.notes || "";
+  renderArtistBands(artistForm, artist.bands);
+  setMainPhotoPreview(artist.picture_url);
+  submitButton.textContent = "Save Artist";
+  cancelEditButton.classList.remove("hidden");
+  setStatus(`Editing ${artist.name}.`, "success");
+  artistForm.scrollIntoView({ behavior: "smooth", block: "start" });
+  artistForm.elements.name.focus();
+}
 
-  const form = event.currentTarget;
-  const artist = artistPayload(form);
-  const saveButton = form.querySelector("button[type='submit']");
-
-  saveButton.disabled = true;
-  setStatus("Saving artist...");
-
-  try {
-    const response = await fetch(`/artists/${artistId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(artist),
-    });
-    const data = await response.json();
-
-    if (!response.ok || !data.ok) {
-      throw new Error(data.error || "Failed to update artist");
-    }
-
-    editingArtistId = null;
-    setStatus("Artist updated.", "success");
-    await loadBands();
-    await loadArtists();
-  } catch (error) {
-    setStatus(error.message, "error");
-  } finally {
-    saveButton.disabled = false;
-  }
+function resetArtistForm() {
+  editingArtistId = null;
+  artistForm.reset();
+  renderArtistBands(artistForm);
+  setMainPhotoPreview("");
+  submitButton.textContent = "Add Artist";
+  cancelEditButton.classList.add("hidden");
 }
 
 async function deleteArtist(artist) {
@@ -504,7 +443,7 @@ async function deleteArtist(artist) {
     }
 
     if (editingArtistId === artist.id) {
-      editingArtistId = null;
+      resetArtistForm();
     }
 
     setStatus("Artist deleted.", "success");
@@ -517,6 +456,10 @@ async function deleteArtist(artist) {
 artistForm.addEventListener("submit", addArtist);
 refreshButton.addEventListener("click", () => Promise.all([loadBands(), loadArtists()]));
 addBandButton.addEventListener("click", () => addBandRow());
+cancelEditButton.addEventListener("click", () => {
+  resetArtistForm();
+  setStatus("Ready to add an artist.");
+});
 connectPhotoUpload(artistForm);
 
 Promise.all([loadBands(), loadArtists()]);

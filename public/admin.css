@@ -101,7 +101,8 @@ button:disabled {
 .admin-workspace {
   align-items: start;
   grid-template-columns: minmax(240px, 1fr) minmax(0, 3fr);
-  max-width: 1280px;
+  max-width: none;
+  width: 100%;
 }
 
 .panel {

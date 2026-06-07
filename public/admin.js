@@ -94,6 +94,15 @@ function createMemberRow(member = {}) {
   });
 
   if (validArtistId(member.id)) {
+    const hasLinkedOption = [...select.options].some((option) => Number(option.value) === member.id);
+
+    if (!hasLinkedOption) {
+      const linkedOption = document.createElement("option");
+      linkedOption.value = member.id;
+      linkedOption.textContent = member.name;
+      select.appendChild(linkedOption);
+    }
+
     select.value = String(member.id);
   }
 

@@ -94,6 +94,15 @@ function createBandRow(band = {}) {
   });
 
   if (validBandId(band.id)) {
+    const hasLinkedOption = [...select.options].some((option) => Number(option.value) === band.id);
+
+    if (!hasLinkedOption) {
+      const linkedOption = document.createElement("option");
+      linkedOption.value = band.id;
+      linkedOption.textContent = band.name;
+      select.appendChild(linkedOption);
+    }
+
     select.value = String(band.id);
   }
 

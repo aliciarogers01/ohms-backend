@@ -273,6 +273,22 @@ function createDisplayCard(band) {
 
   content.append(name, meta, years);
 
+  if (band.members && band.members.length) {
+    const members = document.createElement("div");
+    members.className = "band-members-summary";
+
+    const membersTitle = document.createElement("div");
+    membersTitle.className = "band-members-title";
+    membersTitle.textContent = "Band Members";
+
+    const membersList = document.createElement("div");
+    membersList.className = "band-members-names";
+    membersList.textContent = band.members.map((member) => member.name).join(", ");
+
+    members.append(membersTitle, membersList);
+    content.appendChild(members);
+  }
+
   const cardMain = document.createElement("div");
   cardMain.className = "band-card-main";
   cardMain.append(picture, content);
@@ -461,6 +477,7 @@ async function updateBand(event, bandId) {
 
     editingBandId = null;
     setStatus("Band updated.", "success");
+    await loadArtists();
     await loadBands();
   } catch (error) {
     setStatus(error.message, "error");

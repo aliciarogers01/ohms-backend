@@ -304,6 +304,23 @@ textarea {
   color: #5b6b73;
 }
 
+.band-members-summary {
+  display: grid;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.band-members-title {
+  color: #304149;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.band-members-names {
+  color: #5b6b73;
+  line-height: 1.4;
+}
+
 .band-card-main {
   align-items: center;
   display: flex;
